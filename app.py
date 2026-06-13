@@ -259,7 +259,9 @@ def download_certificate(token):
 def health():
     return jsonify({"status": "ok", "students": len(_civil_index)})
 
+# Load at module level so gunicorn picks it up
+_load_tokens()
+load_index()
+
 if __name__ == "__main__":
-    _load_tokens()
-    load_index()
     app.run(host="0.0.0.0", port=5000, threaded=True, debug=False)
