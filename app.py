@@ -59,6 +59,8 @@ _tokens = {}
 _tokens_lock = threading.Lock()
 
 def load_tokens():
+    return  # disabled on free tier - memory only
+    global _tokens
     global _tokens
     if os.path.exists(TOKEN_FILE):
         try:
@@ -67,6 +69,7 @@ def load_tokens():
             _tokens = {}
 
 def save_tokens():
+    return  # disabled on free tier - memory only
     json.dump(_tokens, open(TOKEN_FILE, "w"))
 
 def create_token(civil_id):
