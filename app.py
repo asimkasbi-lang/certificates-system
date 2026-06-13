@@ -1,14 +1,13 @@
-import os, re, json, uuid, hashlib, logging, threading
+import os, re, json, logging, threading, hmac, hashlib, base64
 from io import BytesIO
 from functools import lru_cache
-from datetime import datetime, timedelta
 from flask import Flask, request, jsonify, make_response, abort
 from pypdf import PdfReader, PdfWriter
 
 BASE_DIR   = os.path.dirname(os.path.abspath(__file__))
 PDF_DIR    = os.path.join(BASE_DIR, "pdfs")
 INDEX_FILE = os.path.join(BASE_DIR, "civil_index.json")
-TOKEN_FILE = os.path.join(BASE_DIR, "tokens.json")
+SECRET     = "futicflow2026securekey"
 
 SCHOOLS = {
     "alqaqaa": {"name_ar": "مدرسة القعقاع بن عمرو التميمي", "emoji": "🏫", "color": "#16a34a"},
@@ -19,7 +18,6 @@ SCHOOLS = {
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
-
 app = Flask(__name__)
 
 # ── Civil ID Index ──────────────────────────────
@@ -54,43 +52,24 @@ def load_index():
         json.dump(idx, f, ensure_ascii=False)
     log.info("Index built: %d", len(idx))
 
-# ── Token Store ─────────────────────────────────
-_tokens = {}
-_tokens_lock = threading.Lock()
+# ── Stateless Token (no storage needed) ────────
+def make_token(civil_id):
+    sig = hmac.new(SECRET.encode(), civil_id.encode(), hashlib.sha256).hexdigest()[:16]
+    payload = base64.urlsafe_b64encode(civil_id.encode()).decode()
+    return f"{payload}.{sig}"
 
-def load_tokens():
-    return  # disabled on free tier - memory only
-    global _tokens
-    global _tokens
-    if os.path.exists(TOKEN_FILE):
-        try:
-            _tokens = json.load(open(TOKEN_FILE))
-        except Exception:
-            _tokens = {}
-
-def save_tokens():
-    return  # disabled on free tier - memory only
-    json.dump(_tokens, open(TOKEN_FILE, "w"))
-
-def create_token(civil_id):
-    with _tokens_lock:
-        for tok, val in _tokens.items():
-            if val["civil_id"] == civil_id:
-                if datetime.fromisoformat(val["expires"]) > datetime.utcnow():
-                    return tok
-        token = hashlib.sha256(f"{civil_id}:{uuid.uuid4()}".encode()).hexdigest()
-        expires = (datetime.utcnow() + timedelta(hours=72)).isoformat()
-        _tokens[token] = {"civil_id": civil_id, "expires": expires}
-        save_tokens()
-        return token
-
-def resolve_token(token):
-    entry = _tokens.get(token)
-    if not entry:
+def verify_token(token):
+    try:
+        parts = token.split(".")
+        if len(parts) != 2:
+            return None
+        civil_id = base64.urlsafe_b64decode(parts[0]).decode()
+        expected = hmac.new(SECRET.encode(), civil_id.encode(), hashlib.sha256).hexdigest()[:16]
+        if hmac.compare_digest(parts[1], expected):
+            return civil_id
         return None
-    if datetime.fromisoformat(entry["expires"]) < datetime.utcnow():
+    except Exception:
         return None
-    return entry["civil_id"]
 
 # ── PDF Extract ─────────────────────────────────
 @lru_cache(maxsize=4)
@@ -106,11 +85,11 @@ def extract_page(fname, page_num):
     buf.seek(0)
     return buf.read()
 
-# ── HTML Page Builder ────────────────────────────
+# ── HTML ────────────────────────────────────────
 def render_page(school):
-    color  = school["color"]
-    name   = school["name_ar"]
-    emoji  = school["emoji"]
+    color = school["color"]
+    name  = school["name_ar"]
+    emoji = school["emoji"]
     return f"""<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -124,14 +103,11 @@ body{{font-family:Arial,sans-serif;background:#f0f4f8;min-height:100vh;display:f
 .school-name{{font-size:1.5rem;font-weight:800;color:#1e293b;margin-bottom:6px}}
 .sub{{font-size:1rem;color:#64748b;margin-bottom:32px}}
 .label{{display:block;font-size:.95rem;font-weight:700;color:#334155;margin-bottom:10px;text-align:right}}
-input{{width:100%;padding:14px 16px;border:2px solid #e2e8f0;border-radius:10px;font-size:1rem;text-align:center;letter-spacing:2px;direction:ltr;outline:none;transition:border-color .2s}}
+input{{width:100%;padding:14px 16px;border:2px solid #e2e8f0;border-radius:10px;font-size:1rem;text-align:center;letter-spacing:2px;direction:ltr;outline:none}}
 input:focus{{border-color:{color}}}
 .btn{{width:100%;margin-top:18px;padding:15px;background:{color};color:#fff;border:none;border-radius:10px;font-size:1.05rem;font-weight:700;cursor:pointer}}
-.btn:hover{{opacity:.9}}
 .btn:disabled{{opacity:.6;cursor:not-allowed}}
 #result{{margin-top:20px;padding:18px;border-radius:12px;display:none;font-size:.95rem;line-height:1.7}}
-.success{{background:#f0fdf4;border:1.5px solid #86efac;color:#166534;display:block!important}}
-.error{{background:#fef2f2;border:1.5px solid #fca5a5;color:#991b1b;display:block!important}}
 .dl-btn{{display:inline-block;margin-top:14px;padding:13px 28px;background:{color};color:#fff;text-decoration:none;border-radius:10px;font-weight:700}}
 footer{{margin-top:28px;font-size:.78rem;color:#94a3b8;text-align:center;line-height:1.7}}
 </style>
@@ -155,18 +131,22 @@ async function doSearch(){{
   var res=document.getElementById('result');
   if(!/^\\d{{7,8}}$/.test(cid)){{showErr('يرجى إدخال رقم مدني صحيح 7 أو 8 أرقام');return;}}
   btn.disabled=true;btn.textContent='جاري البحث...';
-  res.className='';res.style.display='none';
+  res.style.display='none';
   try{{
     var r=await fetch('/api/search',{{method:'POST',headers:{{'Content-Type':'application/json'}},body:JSON.stringify({{civil_id:cid}})}});
     var d=await r.json();
     if(d.success){{
-      res.innerHTML='<b>✅ تم العثور على الشهادة!</b><br/>الرابط صالح 72 ساعة<br/><a class="dl-btn" href="'+d.download_url+'" target="_blank">📄 تحميل الشهادة</a>';
-      res.className='success';
+      res.innerHTML='<b>✅ تم العثور على الشهادة!</b><br/><br/><a class="dl-btn" href="'+d.download_url+'" target="_blank">📄 تحميل الشهادة الدراسية</a>';
+      res.style.cssText='display:block;background:#f0fdf4;border:1.5px solid #86efac;color:#166534;margin-top:20px;padding:18px;border-radius:12px;';
     }}else{{showErr(d.message||'لم يتم العثور على الشهادة');}}
   }}catch(e){{showErr('خطأ في الاتصال');}}
   finally{{btn.disabled=false;btn.textContent='🔍 ابحث عن الشهادة';}}
 }}
-function showErr(m){{var r=document.getElementById('result');r.innerHTML='<b>❌ '+m+'</b>';r.className='error';}}
+function showErr(m){{
+  var r=document.getElementById('result');
+  r.innerHTML='<b>❌ '+m+'</b>';
+  r.style.cssText='display:block;background:#fef2f2;border:1.5px solid #fca5a5;color:#991b1b;margin-top:20px;padding:18px;border-radius:12px;';
+}}
 </script>
 </body>
 </html>"""
@@ -179,8 +159,7 @@ def index():
 @app.route("/school/<key>")
 def school(key):
     s = SCHOOLS.get(key)
-    if not s:
-        abort(404)
+    if not s: abort(404)
     return render_page(s)
 
 @app.route("/api/search", methods=["POST"])
@@ -193,18 +172,17 @@ def api_search():
         entry = _civil_index.get(cid)
     if not entry:
         return jsonify({"success": False, "message": "لم يتم العثور على شهادة بهذا الرقم"}), 404
-    token = create_token(cid)
-    return jsonify({"success": True, "download_url": f"/download/{token}", "expires_hours": 72})
+    token = make_token(cid)
+    return jsonify({"success": True, "download_url": f"/download/{token}"})
 
 @app.route("/download/<token>")
 def download(token):
-    cid = resolve_token(token)
+    cid = verify_token(token)
     if not cid:
-        return "<h2>الرابط منتهي أو غير صحيح</h2><a href='/'>عودة</a>", 410
+        return "<h2 style='font-family:Arial'>الرابط غير صحيح</h2><a href='/'>عودة</a>", 410
     with _index_lock:
         entry = _civil_index.get(cid)
-    if not entry:
-        abort(404)
+    if not entry: abort(404)
     try:
         pdf_bytes = extract_page(entry["file"], entry["page"])
     except Exception as e:
@@ -220,7 +198,6 @@ def health():
     return jsonify({"status": "ok", "students": len(_civil_index)})
 
 # ── Startup ──────────────────────────────────────
-load_tokens()
 load_index()
 
 if __name__ == "__main__":
