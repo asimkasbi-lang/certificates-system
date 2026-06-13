@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{{ school.name_ar }} - بوابة الشهادات</title>
+  <style>
+    :root {
+      --brand: {{ school.color }};
+      --brand-dark: color-mix(in srgb, {{ school.color }} 80%, black);
+      --radius: 16px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+      background: #f0f4f8;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    /* ── Card ─────────────────────────── */
+    .card {
+      background: #fff;
+      border-radius: var(--radius);
+      box-shadow: 0 4px 24px rgba(0,0,0,.10);
+      padding: 40px 36px;
+      width: 100%;
+      max-width: 480px;
+      text-align: center;
+    }
+
+    /* ── Header ───────────────────────── */
+    .school-name {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #1e293b;
+      line-height: 1.4;
+      margin-bottom: 6px;
+    }
+    .portal-title {
+      font-size: 1rem;
+      color: #64748b;
+      margin-bottom: 32px;
+    }
+
+    /* ── Input group ──────────────────── */
+    .label {
+      display: block;
+      font-size: .95rem;
+      font-weight: 700;
+      color: #334155;
+      margin-bottom: 10px;
+      text-align: right;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 14px 16px;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 1rem;
+      text-align: center;
+      letter-spacing: 2px;
+      direction: ltr;
+      transition: border-color .2s;
+      outline: none;
+    }
+    input[type="text"]:focus { border-color: var(--brand); }
+
+    /* ── Button ───────────────────────── */
+    .btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      margin-top: 18px;
+      padding: 15px;
+      background: var(--brand);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background .2s, transform .1s;
+    }
+    .btn:hover  { background: var(--brand-dark); }
+    .btn:active { transform: scale(.98); }
+    .btn:disabled { opacity: .6; cursor: not-allowed; }
+
+    /* ── Spinner ──────────────────────── */
+    .spinner {
+      width: 18px; height: 18px;
+      border: 3px solid rgba(255,255,255,.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Result panel ─────────────────── */
+    .result {
+      margin-top: 24px;
+      padding: 18px 20px;
+      border-radius: 12px;
+      font-size: .95rem;
+      line-height: 1.7;
+      display: none;
+    }
+    .result.success {
+      background: #f0fdf4;
+      border: 1.5px solid #86efac;
+      color: #166534;
+      display: block;
+    }
+    .result.error {
+      background: #fef2f2;
+      border: 1.5px solid #fca5a5;
+      color: #991b1b;
+      display: block;
+    }
+    .result-title {
+      font-weight: 800;
+      font-size: 1.05rem;
+      margin-bottom: 10px;
+    }
+
+    /* ── Download button ──────────────── */
+    .dl-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 14px;
+      padding: 13px 28px;
+      background: var(--brand);
+      color: #fff;
+      text-decoration: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 700;
+      transition: background .2s;
+    }
+    .dl-btn:hover { background: var(--brand-dark); }
+
+    /* ── Footer ───────────────────────── */
+    footer {
+      margin-top: 28px;
+      font-size: .78rem;
+      color: #94a3b8;
+      text-align: center;
+      line-height: 1.7;
+    }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <p style="font-size:2.4rem; margin-bottom:8px;">{{ school.emoji }}</p>
+  <h1 class="school-name">{{ school.name_ar }}</h1>
+  <p class="portal-title">بوابة استخراج الشهادات الدراسية</p>
+
+  <label class="label" for="civil_id">الرقم المدني للطالب:</label>
+  <input type="text" id="civil_id" maxlength="8" inputmode="numeric"
+         placeholder="أدخل الرقم المدني المكون من 7 أو 8 أرقام"
+         oninput="this.value=this.value.replace(/\D/g,'')"/>
+
+  <button class="btn" id="searchBtn" onclick="search()">
+    <span id="btnText">🔍 ابحث عن الشهادة</span>
+    <span id="btnSpinner" class="spinner" style="display:none"></span>
+  </button>
+
+  <div id="result"></div>
+</div>
+
+<footer>
+  تم التطوير والتطبيق بواسطة أخصائي نظم مدرسية: عاصم ناصر الكاسبي<br/>
+  FuticFlow Automation Systems © 2026
+</footer>
+
+<script>
+  const input = document.getElementById('civil_id');
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') search(); });
+
+  async function search() {
+    const civil_id = input.value.trim();
+    const btn      = document.getElementById('searchBtn');
+    const btnText  = document.getElementById('btnText');
+    const spinner  = document.getElementById('btnSpinner');
+    const resultEl = document.getElementById('result');
+
+    if (!/^\d{7,8}$/.test(civil_id)) {
+      showError('يرجى إدخال رقم مدني صحيح مكون من 7 أو 8 أرقام.');
+      return;
+    }
+
+    // Loading state
+    btn.disabled   = true;
+    btnText.style.display  = 'none';
+    spinner.style.display  = 'inline-block';
+    resultEl.className     = '';
+    resultEl.style.display = 'none';
+    resultEl.innerHTML     = '';
+
+    try {
+      const res  = await fetch('/api/search', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ civil_id })
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        showSuccess(data);
+      } else {
+        showError(data.message || 'حدث خطأ غير متوقع.');
+      }
+    } catch (err) {
+      showError('تعذّر الاتصال بالخادم. يرجى المحاولة لاحقاً.');
+    } finally {
+      btn.disabled          = false;
+      btnText.style.display = 'inline';
+      spinner.style.display = 'none';
+    }
+  }
+
+  function showSuccess(data) {
+    const el = document.getElementById('result');
+    el.className = 'result success';
+    el.innerHTML = `
+      <div class="result-title">✅ تم العثور على الشهادة!</div>
+      <p>يمكنك تحميل الشهادة الدراسية عبر الرابط أدناه.</p>
+      <p style="font-size:.82rem;color:#166534;margin-top:6px;">
+        ⏱ الرابط صالح لمدة ${data.expires_hours} ساعة — يمكنك الرجوع إليه في أي وقت.
+      </p>
+      <a class="dl-btn" href="${data.download_url}" target="_blank" rel="noopener">
+        📄 تحميل الشهادة الدراسية
+      </a>
+    `;
+  }
+
+  function showError(msg) {
+    const el = document.getElementById('result');
+    el.className = 'result error';
+    el.innerHTML = `<div class="result-title">❌ لم يتم العثور على الشهادة</div><p>${msg}</p>`;
+  }
+</script>
+</body>
+</html>
