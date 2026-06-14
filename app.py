@@ -142,7 +142,7 @@ footer{{margin-top:28px;font-size:.78rem;color:#94a3b8;text-align:center;line-he
   <p class="sub">بوابة استخراج الشهادات الدراسية</p>
   <label class="label">الرقم المدني للطالب:</label>
   <input type="text" id="cid" maxlength="8" inputmode="numeric"
-         placeholder="أدخل الرقم المدني المكون من 7 أو 8 أرقام"
+         placeholder="أدخل الرقم المدني"
          oninput="this.value=this.value.replace(/\\D/g,'')"/>
   <button class="btn" id="btn" onclick="doSearch()">🔍 ابحث عن الشهادة</button>
   <div id="result"></div>
