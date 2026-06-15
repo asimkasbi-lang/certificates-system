@@ -17,14 +17,7 @@ SCHOOLS = {
         "emoji": "🏫",
         "color": "#1d4ed8",
     },
-     "alqaqaa": {
-        "name_ar": "مدرسة القعقاع بن عمرو التميمي للتعليم الأساسي",
-        "name_en": "ALQaqaa bin Amro ALtamimi School",
-        "emoji": "🏫",
-        "color": "#16a34a",
-    },
-
-
+    
     "asimbnaddi": {
         "name_ar": "مدرسة عاصم بن عدي للتعليم الأساسي للبنين",
         "name_en": "Asim bin Addi School",
