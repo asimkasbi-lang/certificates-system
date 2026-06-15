@@ -16,6 +16,12 @@ SCHOOLS = {
         "emoji": "🏫",
         "color": "#1d4ed8",
     },
+    "alqaqaa": {
+        "name_ar": "\u0645\u062f\u0631\u0633\u0629 \u0627\u0644\u0642\u0639\u0642\u0627\u0639 \u0628\u0646 \u0639\u0645\u0631\u0648 \u0627\u0644\u062a\u0645\u064a\u0645\u064a \u0644\u0644\u0628\u0646\u064a\u0646",
+        "name_en": "Al Qaqaa Bin Amr Al Tamimi School",
+        "emoji": "\U0001f3eb",
+        "color": "#0f766e",
+    },
 }
 
 FOOTER = "تم التطوير بواسطة أخصائي أنظمه مدرسية: عاصم ناصر الكاسبي"
@@ -53,7 +59,7 @@ def load_index():
             with pdfplumber.open(os.path.join(PDF_DIR, fname)) as pdf:
                 for i, page in enumerate(pdf.pages):
                     text = page.extract_text() or ""
-                    m = re.search(r"CIVIL NO\s*:?\s*(\d{7,8})", text)
+                    m = re.search(r"CIVIL NO\s*:?\s*(\d{7,9})", text)
                     if m:
                         idx[m.group(1)] = {"file": fname, "page": i+1}
 
@@ -134,7 +140,7 @@ footer{{margin-top:20px;font-size:.8rem;color:#94a3b8}}
   <div style="font-size:2.5rem">{emoji}</div>
   <h2>{name}</h2>
 
-  <input id="cid" placeholder="الرقم المدني" maxlength="8"
+  <input id="cid" placeholder="الرقم المدني" maxlength="9"
          oninput="this.value=this.value.replace(/\\D/g,'')"/>
 
   <button onclick="search()">بحث</button>
@@ -149,7 +155,7 @@ async function search(){{
   let cid=document.getElementById("cid").value;
   let r=document.getElementById("result");
 
-  if(!/^\\d{{7,8}}$/.test(cid)){{
+  if(!/^\\d{{7,9}}$/.test(cid)){{
     r.innerHTML="رقم غير صحيح";
     r.style.display="block";
     return;
@@ -195,7 +201,7 @@ def api_search():
     data = request.get_json(force=True, silent=True) or {}
     cid = str(data.get("civil_id", "")).strip()
 
-    if not re.fullmatch(r"\d{7,8}", cid):
+    if not re.fullmatch(r"\d{7,9}", cid):
         return jsonify({"success": False, "message": "رقم مدني غير صحيح"}), 400
 
     with _index_lock:
