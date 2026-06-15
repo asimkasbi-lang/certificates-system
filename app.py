@@ -10,12 +10,6 @@ INDEX_FILE = os.path.join(BASE_DIR, "civil_index.json")
 SECRET     = "futicflow2026securekey"
 
 SCHOOLS = {
-    "alqaqaa": {
-        "name_ar": "مدرسة القعقاع بن عمرو التميمي للتعليم الأساسي",
-        "name_en": "ALQaqaa bin Amro ALtamimi School",
-        "emoji": "🏫",
-        "color": "#16a34a",
-    },
     "sultanboos": {
         "name_ar": "مدرسة السلطان قابوس للبنين",
         "name_en": "Sultan Qaboos School",
@@ -23,21 +17,19 @@ SCHOOLS = {
         "color": "#1d4ed8",
     },
 
-
-    
     "asimbnaddi": {
         "name_ar": "مدرسة عاصم بن عدي للتعليم الأساسي للبنين",
         "name_en": "Asim bin Addi School",
         "emoji": "🏫",
         "color": "#b45309",
     },
+
     "aljawabi": {
         "name_ar": "مدرسة الجوابي للتعليم الأساسي",
         "name_en": "ALJawabi Girls School",
         "emoji": "🌸",
         "color": "#9333ea",
     },
-}
 
 FOOTER = "تم التطوير بواسطة أخصائي أنظمه مدرسية: عاصم ناصر الكاسبي"
 
