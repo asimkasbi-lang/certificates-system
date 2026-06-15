@@ -10,8 +10,15 @@ INDEX_FILE = os.path.join(BASE_DIR, "civil_index.json")
 SECRET     = "futicflow2026securekey"
 
 SCHOOLS = {
+    "alqaqaa": {
+        "name_ar": "مدرسة القعقاع بن عمرو التميمي للتعليم الأساسي",
+        "name_en": "ALQaqaa bin Amro ALtamimi School",
+        "emoji": "🏫",
+        "color": "#16a34a",
+    },
+
     "sultanboos": {
-        "name_ar": "مدرسة السلطان قابوس للبنين",
+        "name_ar": "مدرسة السلطان قابوس",
         "name_en": "Sultan Qaboos School",
         "emoji": "🏫",
         "color": "#1d4ed8",
@@ -30,6 +37,7 @@ SCHOOLS = {
         "emoji": "🌸",
         "color": "#9333ea",
     },
+}
 
 FOOTER = "تم التطوير بواسطة أخصائي أنظمه مدرسية: عاصم ناصر الكاسبي"
 
@@ -48,12 +56,14 @@ def load_index():
             _civil_index = json.load(f)
         log.info("Index loaded: %d students", len(_civil_index))
         return
+
     log.info("Building index from PDFs...")
     try:
         import pdfplumber
     except Exception:
         os.system("pip install pdfplumber -q")
         import pdfplumber
+
     idx = {}
     for fname in sorted(os.listdir(PDF_DIR)):
         if not fname.endswith(".pdf"):
@@ -64,9 +74,11 @@ def load_index():
                 m = re.search(r"CIVIL NO\s*:?\s*(\d{7,8})", text)
                 if m:
                     idx[m.group(1)] = {"file": fname, "page": i+1}
+
     _civil_index = idx
     with open(INDEX_FILE, "w", encoding="utf-8") as f:
         json.dump(idx, f, ensure_ascii=False)
+
     log.info("Index built: %d students", len(idx))
 
 # ── Stateless Token ─────────────────────────────
@@ -107,6 +119,7 @@ def render_page(school):
     color = school["color"]
     name  = school["name_ar"]
     emoji = school["emoji"]
+
     return f"""<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -135,39 +148,68 @@ footer{{margin-top:28px;font-size:.78rem;color:#94a3b8;text-align:center;line-he
   <p style="font-size:2.4rem;margin-bottom:8px">{emoji}</p>
   <h1 class="school-name">{name}</h1>
   <p class="sub">بوابة استخراج الشهادات الدراسية</p>
+
   <label class="label">الرقم المدني للطالب:</label>
   <input type="text" id="cid" maxlength="8" inputmode="numeric"
          placeholder="أدخل الرقم المدني"
          oninput="this.value=this.value.replace(/\\D/g,'')"/>
+
   <button class="btn" id="btn" onclick="doSearch()">🔍 ابحث عن الشهادة</button>
+
   <div id="result"></div>
 </div>
+
 <footer>{FOOTER}<br/>FuticFlow Automation Systems &copy; 2026</footer>
+
 <script>
 document.getElementById('cid').addEventListener('keydown',function(e){{if(e.key==='Enter')doSearch()}});
 async function doSearch(){{
   var cid=document.getElementById('cid').value.trim();
   var btn=document.getElementById('btn');
   var res=document.getElementById('result');
-  if(!/^\\d{{7,8}}$/.test(cid)){{showErr('يرجى إدخال رقم مدني صحيح مكون من 7 أو 8 أرقام');return;}}
-  btn.disabled=true;btn.textContent='جاري البحث...';
+
+  if(!/^\\d{{7,8}}$/.test(cid)){{
+    showErr('يرجى إدخال رقم مدني صحيح مكون من 7 أو 8 أرقام');
+    return;
+  }}
+
+  btn.disabled=true;
+  btn.textContent='جاري البحث...';
   res.style.display='none';
+
   try{{
-    var r=await fetch('/api/search',{{method:'POST',headers:{{'Content-Type':'application/json'}},body:JSON.stringify({{civil_id:cid}})}});
+    var r=await fetch('/api/search', {{
+      method:'POST',
+      headers:{{'Content-Type':'application/json'}},
+      body:JSON.stringify({{civil_id:cid}})
+    }});
+
     var d=await r.json();
+
     if(d.success){{
-      res.innerHTML='<b>✅ تم العثور على الشهادة!</b><br/>يمكنك تحميل الشهادة الدراسية عبر الرابط أدناه<br/><a class="dl-btn" href="'+d.download_url+'" target="_blank">📄 تحميل الشهادة الدراسية</a>';
+      res.innerHTML='<b>✅ تم العثور على الشهادة!</b><br/>يمكنك تحميل الشهادة عبر الرابط أدناه<br/><a class="dl-btn" href="'+d.download_url+'" target="_blank">📄 تحميل الشهادة</a>';
       res.style.cssText='display:block;background:#f0fdf4;border:1.5px solid #86efac;color:#166534;margin-top:20px;padding:18px;border-radius:12px;text-align:center';
-    }}else{{showErr(d.message||'لم يتم العثور على شهادة بهذا الرقم المدني');}}
-  }}catch(e){{showErr('تعذّر الاتصال بالخادم، يرجى المحاولة لاحقاً');}}
-  finally{{btn.disabled=false;btn.textContent='🔍 ابحث عن الشهادة';}}
+    }} else {{
+      showErr(d.message || 'لم يتم العثور على شهادة بهذا الرقم المدني');
+    }}
+
+  }} catch(e) {{
+    showErr('تعذّر الاتصال بالخادم، يرجى المحاولة لاحقاً');
+  }}
+
+  finally {{
+    btn.disabled=false;
+    btn.textContent='🔍 ابحث عن الشهادة';
+  }}
 }}
+
 function showErr(m){{
   var r=document.getElementById('result');
   r.innerHTML='<b>❌ '+m+'</b>';
   r.style.cssText='display:block;background:#fef2f2;border:1.5px solid #fca5a5;color:#991b1b;margin-top:20px;padding:18px;border-radius:12px;text-align:center';
 }}
 </script>
+
 </body>
 </html>"""
 
@@ -179,19 +221,24 @@ def index():
 @app.route("/school/<key>")
 def school(key):
     s = SCHOOLS.get(key)
-    if not s: abort(404)
+    if not s:
+        abort(404)
     return render_page(s)
 
 @app.route("/api/search", methods=["POST"])
 def api_search():
     data = request.get_json(force=True, silent=True) or {}
     cid  = str(data.get("civil_id", "")).strip()
+
     if not re.fullmatch(r"\d{7,8}", cid):
         return jsonify({"success": False, "message": "رقم مدني غير صحيح"}), 400
+
     with _index_lock:
         entry = _civil_index.get(cid)
+
     if not entry:
         return jsonify({"success": False, "message": "لم يتم العثور على شهادة بهذا الرقم المدني"}), 404
+
     token = make_token(cid)
     return jsonify({"success": True, "download_url": f"/download/{token}"})
 
@@ -200,14 +247,19 @@ def download(token):
     cid = verify_token(token)
     if not cid:
         return "<h2 style='font-family:Arial;padding:20px'>الرابط غير صحيح</h2><a href='/'>عودة</a>", 410
+
     with _index_lock:
         entry = _civil_index.get(cid)
-    if not entry: abort(404)
+
+    if not entry:
+        abort(404)
+
     try:
         pdf_bytes = extract_page(entry["file"], entry["page"])
     except Exception as e:
         log.error("PDF error: %s", e)
         abort(500)
+
     resp = make_response(pdf_bytes)
     resp.headers["Content-Type"] = "application/pdf"
     resp.headers["Content-Disposition"] = f'inline; filename="certificate_{cid}.pdf"'
