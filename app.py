@@ -59,7 +59,7 @@ def load_index():
             with pdfplumber.open(os.path.join(PDF_DIR, fname)) as pdf:
                 for i, page in enumerate(pdf.pages):
                     text = page.extract_text() or ""
-                    m = re.search(r"CIVIL NO\s*:?\s*(\d{7,9})", text)
+                    m = re.search(r"CIVIL NO\s*:?\s*(\d{7,15})", text)
                     if m:
                         idx[m.group(1)] = {"file": fname, "page": i+1}
 
@@ -140,7 +140,7 @@ footer{{margin-top:20px;font-size:.8rem;color:#94a3b8}}
   <div style="font-size:2.5rem">{emoji}</div>
   <h2>{name}</h2>
 
-  <input id="cid" placeholder="الرقم المدني" maxlength="9"
+  <input id="cid" placeholder="الرقم المدني" maxlength="15"
          oninput="this.value=this.value.replace(/\\D/g,'')"/>
 
   <button onclick="search()">بحث</button>
@@ -155,7 +155,7 @@ async function search(){{
   let cid=document.getElementById("cid").value;
   let r=document.getElementById("result");
 
-  if(!/^\\d{{7,9}}$/.test(cid)){{
+  if(!/^\\d{{7,15}}$/.test(cid)){{
     r.innerHTML="رقم غير صحيح";
     r.style.display="block";
     return;
@@ -201,7 +201,7 @@ def api_search():
     data = request.get_json(force=True, silent=True) or {}
     cid = str(data.get("civil_id", "")).strip()
 
-    if not re.fullmatch(r"\d{7,9}", cid):
+    if not re.fullmatch(r"\d{7,15}", cid):
         return jsonify({"success": False, "message": "رقم مدني غير صحيح"}), 400
 
     with _index_lock:
