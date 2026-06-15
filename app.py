@@ -11,25 +11,25 @@ SECRET     = "futicflow2026securekey"
 
 SCHOOLS = {
     "alqaqaa": {
-        "name_ar": "مدرسة القعقاع بن عمرو التميمي",
+        "name_ar": "مدرسة القعقاع بن عمرو التميمي للتعليم الأساسي",
         "name_en": "ALQaqaa bin Amro ALtamimi School",
         "emoji": "🏫",
         "color": "#16a34a",
     },
     "sultanboos": {
-        "name_ar": "مدرسة السلطان قابوس",
+        "name_ar": "مدرسة السلطان قابوس للبنين",
         "name_en": "Sultan Qaboos School",
         "emoji": "🏫",
         "color": "#1d4ed8",
     },
     "asimbnaddi": {
-        "name_ar": "مدرسة عاصم بن عدي",
+        "name_ar": "مدرسة عاصم بن عدي للتعليم الأساسي للبنين",
         "name_en": "Asim bin Addi School",
         "emoji": "🏫",
         "color": "#b45309",
     },
     "aljawabi": {
-        "name_ar": "مدرسة الجوابي للبنات",
+        "name_ar": "مدرسة الجوابي للتعليم الأساسي",
         "name_en": "ALJawabi Girls School",
         "emoji": "🌸",
         "color": "#9333ea",
@@ -142,7 +142,7 @@ footer{{margin-top:28px;font-size:.78rem;color:#94a3b8;text-align:center;line-he
   <p class="sub">بوابة استخراج الشهادات الدراسية</p>
   <label class="label">الرقم المدني للطالب:</label>
   <input type="text" id="cid" maxlength="8" inputmode="numeric"
-         placeholder="أدخل الرقم المدني"
+         placeholder="أدخل الرقم المدني المكون من 7 أو 8 أرقام"
          oninput="this.value=this.value.replace(/\\D/g,'')"/>
   <button class="btn" id="btn" onclick="doSearch()">🔍 ابحث عن الشهادة</button>
   <div id="result"></div>
