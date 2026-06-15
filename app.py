@@ -66,7 +66,7 @@ def load_index():
         with pdfplumber.open(os.path.join(PDF_DIR, fname)) as pdf:
             for i, page in enumerate(pdf.pages):
                 text = page.extract_text() or ""
-                m = re.search(r"CIVIL NO\s*:\s*(\d{7,8})", text)
+                m = re.search(r"CIVIL NO\s*:?\s*(\d{7,8})", text)
                 if m:
                     idx[m.group(1)] = {"file": fname, "page": i+1}
     _civil_index = idx
