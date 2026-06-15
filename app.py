@@ -17,12 +17,7 @@ SCHOOLS = {
         "color": "#16a34a",
     },
 
-    "sultanboos": {
-        "name_ar": "مدرسة السلطان قابوس للبنين",
-        "name_en": "Sultan Qaboos School",
-        "emoji": "🏫",
-        "color": "#1d4ed8",
-    },
+   
     "asimbnaddi": {
         "name_ar": "مدرسة عاصم بن عدي للتعليم الأساسي للبنين",
         "name_en": "Asim bin Addi School",
