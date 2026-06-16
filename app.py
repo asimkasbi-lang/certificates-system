@@ -22,6 +22,12 @@ SCHOOLS = {
         "emoji": "\U0001f3eb",
         "color": "#0f766e",
     },
+    "abdullah_jubair": {
+        "name_ar": "\u0645\u062f\u0631\u0633\u0629 \u0639\u0628\u062f\u0627\u0644\u0644\u0647 \u0628\u0646 \u062c\u0628\u064a\u0631 \u0644\u0644\u0628\u0646\u064a\u0646",
+        "name_en": "Abdullah Bin Jubair School",
+        "emoji": "\U0001f3eb",
+        "color": "#7c3aed",
+    },
 }
 
 FOOTER = "تم التطوير بواسطة أخصائي أنظمه مدرسية: عاصم ناصر الكاسبي"
