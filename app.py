@@ -28,6 +28,12 @@ SCHOOLS = {
         "emoji": "\U0001f3eb",
         "color": "#7c3aed",
     },
+    "abubakr_alrazi": {
+        "name_ar": "\u0645\u062f\u0631\u0633\u0629 \u0623\u0628\u0648\u0628\u0643\u0631 \u0627\u0644\u0631\u0627\u0632\u064a \u0644\u0644\u0628\u0646\u064a\u0646",
+        "name_en": "Abu Bakr Al Razi School",
+        "emoji": "\U0001f3eb",
+        "color": "#b45309",
+    },
 }
 
 FOOTER = "تم التطوير بواسطة أخصائي أنظمه مدرسية: عاصم ناصر الكاسبي"
