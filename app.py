@@ -34,6 +34,12 @@ SCHOOLS = {
         "emoji": "\U0001f3eb",
         "color": "#b45309",
     },
+    "dawhat_alilm": {
+        "name_ar": "\u0645\u062f\u0631\u0633\u0629 \u062f\u0648\u062d\u0629 \u0627\u0644\u0639\u0644\u0645 \u0644\u0644\u062a\u0639\u0644\u064a\u0645 \u0627\u0644\u0623\u0633\u0627\u0633\u064a \u0635\u0641\u0648\u0641 (3-4)",
+        "name_en": "Dawhat Al Ilm School",
+        "emoji": "\U0001f3eb",
+        "color": "#2563eb",
+    },
 }
 
 FOOTER = "تم التطوير بواسطة أخصائي أنظمه مدرسية: عاصم ناصر الكاسبي"
@@ -114,7 +120,10 @@ def get_reader(fname):
 def extract_page(fname, page_num):
     reader = get_reader(fname)
     writer = PdfWriter()
-    writer.add_page(reader.pages[page_num - 1])
+    page_nums = page_num if isinstance(page_num, list) else [page_num]
+
+    for num in page_nums:
+        writer.add_page(reader.pages[num - 1])
 
     buf = BytesIO()
     writer.write(buf)
